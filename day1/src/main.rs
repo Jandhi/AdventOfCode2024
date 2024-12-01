@@ -1,4 +1,41 @@
 fn main() {
+    rewrite();
+}
+
+fn rewrite() {
+    let file = include_str!("input.txt");
+
+    let (vec1  , vec2): (Vec<i32>, Vec<i32>) = file
+        .lines()
+        .map(|line| {
+            let parts = line.split("   ").collect::<Vec<&str>>();
+            (parts[0].parse::<i32>().unwrap(), parts[1].parse::<i32>().unwrap())
+        })
+        .unzip();
+
+    let mut vec1sorted = vec1.clone();
+    vec1sorted.sort();
+    let mut vec2sorted = vec2.clone();
+    vec2sorted.sort();
+
+    let diffs: i32 = vec1
+        .iter()
+        .zip(vec2.iter())
+        .map(|(a, b)| i32::abs(a - b))
+        .sum();
+
+    println!("Part 1: {}", diffs);
+
+    let score: i32 = vec1
+        .iter()
+        .map(|num| vec2.iter().filter(|&n| *n == *num).count() as i32 * num)
+        .sum();
+
+    println!("Part 2: {}", score);
+}
+
+
+fn first_solution() {
     let file = include_str!("input.txt");
 
     let mut vec1 = vec![];
