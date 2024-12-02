@@ -18,9 +18,9 @@ fn rewrite() {
     let mut vec2sorted = vec2.clone();
     vec2sorted.sort();
 
-    let diffs: i32 = vec1
+    let diffs: i32 = vec1sorted
         .iter()
-        .zip(vec2.iter())
+        .zip(vec2sorted.iter())
         .map(|(a, b)| i32::abs(a - b))
         .sum();
 
