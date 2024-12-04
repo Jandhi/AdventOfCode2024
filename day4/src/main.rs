@@ -10,6 +10,14 @@ impl Point {
     fn new(x: i32, y: i32) -> Point {
         Point { x, y }
     }
+
+    fn in_bounds(&self, grid : &Vec<Vec<char>>) -> bool {
+        self.x >= 0 && self.y >= 0 && self.x < grid.len() as i32 && self.y < grid[self.x as usize].len() as i32
+    }
+
+    fn get(&self, grid : &Vec<Vec<char>>) -> char {
+        grid[self.x as usize][self.y as usize]
+    }
 }
 
 impl Add for Point {
@@ -49,10 +57,8 @@ fn main() {
                 let p3 = p2 + direction;
                 let p4 = p3 + direction;
 
-                if p2.x >= 0 && p2.y >= 0 && p2.x < grid.len() as i32 && p2.y < grid[p2.x as usize].len() as i32 &&
-                    p3.x >= 0 && p3.y >= 0 && p3.x < grid.len() as i32 && p3.y < grid[p3.x as usize].len() as i32 &&
-                    p4.x >= 0 && p4.y >= 0 && p4.x < grid.len() as i32 && p4.y < grid[p4.x as usize].len() as i32 {
-                    if grid[p1.x as usize][p1.y as usize] == 'X' && grid[p2.x as usize][p2.y as usize] == 'M' && grid[p3.x as usize][p3.y as usize] == 'A' && grid[p4.x as usize][p4.y as usize] == 'S' {
+                if p2.in_bounds(&grid) && p3.in_bounds(&grid) && p4.in_bounds(&grid) {
+                    if p1.get(&grid) == 'X' && p2.get(&grid) == 'M' && p3.get(&grid) == 'A' && p4.get(&grid) == 'S' {
                         count += 1;
                     }
                 }
@@ -61,4 +67,28 @@ fn main() {
     }
 
     println!("PART 1: {}", count);
+
+    count = 0;
+
+    for x in 0..grid.len() {
+        for y in 0..grid[x].len() {
+            let p0 = Point::new(x as i32, y as i32);
+            
+            let p1 = p0 + Point::new(-1, -1);
+            let p2 = p0 + Point::new(1, 1);
+
+            let p3 = p0 + Point::new(-1, 1);
+            let p4 = p0 + Point::new(1, -1);
+        
+            if p1.in_bounds(&grid) && p2.in_bounds(&grid) && p3.in_bounds(&grid) && p4.in_bounds(&grid) {
+                if p0.get(&grid) == 'A' &&
+                    (p1.get(&grid) == 'M' && p2.get(&grid) == 'S' || p1.get(&grid) == 'S' && p2.get(&grid) == 'M') &&
+                    (p3.get(&grid) == 'M' && p4.get(&grid) == 'S' || p3.get(&grid) == 'S' && p4.get(&grid) == 'M') {
+                        count += 1;
+                }
+            }
+        }
+    }
+
+    println!("PART 2: {}", count);
 }
