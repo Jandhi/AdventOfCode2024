@@ -69,7 +69,7 @@ fn main() {
         line.chars().map(|num| num.to_digit(10).unwrap()).collect()
     }).collect();
 
-    let mut scores : u32 = grid.iter()
+    let scores : u32 = grid.iter()
         .enumerate()
         .map(|row| {
             row.1.iter()
@@ -86,7 +86,7 @@ fn main() {
 
     println!("PART 1: {}", scores);
 
-    let mut ratings : u32 = grid.iter()
+    let ratings : u32 = grid.iter()
         .enumerate()
         .map(|row| {
             row.1.iter()
