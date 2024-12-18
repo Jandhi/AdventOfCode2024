@@ -54,7 +54,7 @@ fn get_path(grid : Vec<Vec<bool>>) -> Option<Vec<Point<i32>>> {
 
 fn main() {
     let file = include_str!("input.txt");
-    let mut points = file.lines().map(|line| {
+    let points = file.lines().map(|line| {
         let mut iter = line.split(",");
         let x : i32 = iter.next().unwrap().parse().unwrap();
         let y : i32 = iter.next().unwrap().parse().unwrap();
@@ -63,7 +63,6 @@ fn main() {
 
     let size = Point::new(71, 71);
     let falls = 1024;
-    let target = Point::new(size.x as i32 - 1, size.y as i32 - 1);
 
     let mut grid : Vec<Vec<bool>> = vec![vec![false; size.y]; size.x];
     for i in 0..falls {
