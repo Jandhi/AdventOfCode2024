@@ -1,0 +1,11 @@
+BST 4 -> B = A % 8 # Take the next 3 bits of A
+BXL 2 -> B ^= 2 # B gets xor'd by 2
+CDV 5 -> C = A / 2**B 
+BXL 3 -> B ^= 3 # B gets xor'd by 3
+BXC 4 -> B ^= C # B gets xor'd by A / 2**B
+OUT 5 -> OUT B % 8 # Print B
+ADV 3 -> A /= 2**3 # A gets shifted by 3 
+JNZ 0 -> REPEAT
+
+
+(A^2)^3^A
