@@ -8,6 +8,42 @@ struct File {
     empty: usize,
 }
 
+fn get_checksum(files : &Vec<File>) -> usize {
+    let mut i = 0;
+    let mut sum = 0;
+
+    for file in files.iter() {
+        let mut indices = (i..i + file.length)
+            .fold("(".to_string(), |str, val| format!("{}{}+", str, val));
+
+        indices.pop();
+        indices += ")";
+
+        sum += (i..i + file.length).sum::<usize>() * file.id;
+
+        println!("{} * {} = {}", indices, file.id, (i..i + file.length).sum::<usize>() * file.id);
+
+
+        i += file.length + file.empty;
+    }
+
+    sum
+}
+
+fn print_files(files : &Vec<File>) {
+    for file in files.iter() {
+        for _ in 0..file.length {
+            print!("{}", file.id);
+        }
+
+        for _ in 0..file.empty {
+            print!(".");
+        }
+    }
+
+    println!();
+}
+
 fn main() {
     let mut file = include_str!("input.txt").to_string();
 
@@ -65,48 +101,30 @@ fn main() {
 
     let mut p2_files = files.clone();
 
-    for i in 0..p2_files.len() {
-        let id = p2_files.len() - 1 - i; // start from back
-        let index = p2_files.iter().position(|file| file.id == id).unwrap();
+    for file_id in (0..id).rev() {
+        let pos = p2_files.iter().position(|file| file.id == file_id).unwrap();
 
-        for mut j in 0..index {
-            if p2_files[j].empty >= p2_files[index].length {
-                //println!("{:?} has space for {:?}", p2_files[j], p2_files[index]);
-
-                let mut file = p2_files.remove(index);
-                
-                if j > index {
-                    j -= 1;
-                }
-
-                p2_files[index - 1].empty += file.length + file.empty;
-                
-                file.index = p2_files[j].index + p2_files[j].length;
-                file.empty = p2_files[j].empty - file.length;
-                
-                p2_files[j].empty = 0;
-
-                p2_files.insert(j + 1, file);
+        for new_pos in 0..pos {
+            if p2_files[new_pos].empty < p2_files[pos].length {
+                continue;
             }
+            
+            // Add empty space to the file originally preceding it
+            p2_files[pos - 1].empty += p2_files[pos].empty + p2_files[pos].length;
+
+            // The file only has as much empty space as is left from the new prededing file
+            p2_files[pos].empty = p2_files[new_pos].empty - p2_files[pos].length;
+
+            // The new file preceding our file will have no empty spots
+            p2_files[new_pos].empty = 0;
+
+            
+            let file = p2_files.remove(pos);
+            p2_files.insert(new_pos + 1, file);
+
+            break;
         }
     }
 
-    let mut checksum = 0;
-    let mut i = 0;
-    for file in p2_files.iter() {
-        for _ in 0..file.length {
-            //print!("{}", file.id);
-
-            //println!("{} * {}", file.id, i);
-            checksum += file.id * i;
-            i += 1;
-        }
-
-        for _ in 0..file.empty {
-            //print!(".");
-            i += 1;
-        }
-    }
-
-    println!("Part 2: {}", checksum);
+    println!("Part 2: {}", get_checksum(&p2_files));
 }
