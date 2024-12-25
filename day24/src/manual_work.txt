@@ -1,0 +1,30 @@
+Through trying additions, I found that the following numbers had issues
+
+9
+18
+22
+27
+
+
+8 bit carry: fcw
+9 bit carry: bqw
+
+
+y09 XOR x09 -> hbs
+x09 AND y09 -> kfp
+hbs OR bqw -> tfc
+
+kfp XOR fcw -> z09
+kfp AND fcw -> bqw
+scq OR qsb -> fcw (8 carry)
+y08 AND x08 -> scq
+
+gpk XOR tfc -> z10
+brf (7 carry) AND ndc -> qsb
+
+9 -> SWAP z09 and tfc CONFIRMED? // no, its kfp hbs
+18 -> SWAP dhq and z18 CONFIRMED?
+22 -> SWAP z22 and pdg CONFIRMED?
+27 -> SWAP z27 and jcp 
+
+dhq,jcp,pdg,tfc,z09,z18,z22,z27
