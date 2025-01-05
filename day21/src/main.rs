@@ -1,223 +1,223 @@
 
 use core::num;
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, hash::Hash};
 
 use point::Point;
 
 mod point;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum EmptyPosition {
-    TopLeft,
-    BottomLeft,
-}
-
-struct Keypad {
-    grid: HashMap<char, Point<i32>>,
-    empty: EmptyPosition,
-}
-
-impl Keypad {
-    fn new_numpad() -> Keypad {
-        let mut grid = HashMap::new();
-        grid.insert(' ', Point::new(0, 0));
-        grid.insert('0', Point::new(1, 0));
-        grid.insert('A', Point::new(2, 0));
-        grid.insert('1', Point::new(0, 1));
-        grid.insert('2', Point::new(1, 1));
-        grid.insert('3', Point::new(2, 1));
-        grid.insert('4', Point::new(0, 2));
-        grid.insert('5', Point::new(1, 2));
-        grid.insert('6', Point::new(2, 2));
-        grid.insert('7', Point::new(0, 3));
-        grid.insert('8', Point::new(1, 3));
-        grid.insert('9', Point::new(2, 3));
-        Keypad { grid, empty: EmptyPosition::BottomLeft }
-    }
-
-    fn new_control_pad() -> Keypad {
-        let mut grid = HashMap::new();
-        grid.insert('<', Point::new(0, 0));
-        grid.insert('v', Point::new(1, 0));
-        grid.insert('>', Point::new(2, 0));
-        grid.insert(' ', Point::new(0, 1));
-        grid.insert('^', Point::new(1, 1));
-        grid.insert('A', Point::new(2, 1));
-        Keypad { grid, empty: EmptyPosition::TopLeft }
-    }
-
-    fn decode(&self, instructions : &str) -> String {
-        let mut position = self.grid[&'A'];
-        let mut decoded = "".to_string();
-
-        for c in instructions.chars() {
-            match c {
-                '>' => {
-                    position.x += 1;
-                },
-                '<' => {
-                    position.x -= 1;
-                },
-                '^' => {
-                    position.y += 1;
-                },
-                'v' => {
-                    position.y -= 1;
-                },
-                'A' => {
-                    decoded += &self.grid.iter().find(|(_, &v)| v == position).unwrap().0.to_string();
-                }
-                _ => {}
+fn best_route_directional_keypad(start : char, end : char) -> String {
+    match start {
+        '<' => {
+            match end {
+                '<' => "A".to_string(),
+                '>' => ">>A".to_string(),
+                '^' => ">^A".to_string(),
+                'v' => ">A".to_string(),
+                'A' => ">>^A".to_string(),
+                _ => panic!("Invalid end character")
             }
-
-            if position == self.grid[&' '] {
-                println!("ILLEGAL POSITION!");
+        },
+        '>' => {
+            match end {
+                '<' => "<<A".to_string(),
+                '>' => "A".to_string(),
+                '^' => "<^A".to_string(),
+                'v' => "<A".to_string(),
+                'A' => "^A".to_string(),
+                _ => panic!("Invalid end character")
+            }
+        },
+        '^' => {
+            match end {
+                '<' => "v<A".to_string(),
+                '>' => "v>A".to_string(),
+                '^' => "A".to_string(),
+                'v' => "vA".to_string(),
+                'A' => ">A".to_string(),
+                _ => panic!("Invalid end character")
+            }
+        },
+        'v' => {
+            match end {
+                '<' => "<A".to_string(),
+                '>' => ">A".to_string(),
+                '^' => "^A".to_string(),
+                'v' => "A".to_string(),
+                'A' => ">^A".to_string(),
+                _ => panic!("Invalid end character")
+            }
+        },
+        'A' => {
+            match end {
+                '<' => "v<<A".to_string(),
+                '>' => "vA".to_string(),
+                '^' => "<A".to_string(),
+                'v' => "<vA".to_string(),
+                'A' => "A".to_string(),
+                _ => panic!("Invalid end character")
             }
         }
+        _ => panic!("Invalid start character")
+    }
+}
 
-        decoded
+fn route_directional(string : &str) -> String {
+
+    let chars : Vec<char> = string.chars().collect();
+    let mut solution = String::new();
+
+    for i in 0..chars.len() {
+        solution += best_route_directional_keypad(if i == 0 { 'A' } else { chars[i - 1] }, chars[i]).as_str()
     }
 
-    fn get_sequence(&self, sequence : &str) -> String {
-        let mut answer = "".to_string();
+    solution
+}
 
-        for i in 0..sequence.len() {
-            let start = if i == 0 { 'A' } else { sequence.chars().nth(i - 1).unwrap() };
-            let end = sequence.chars().nth(i).unwrap();
+fn best_route_numeric_keypad(start : char, end : char) -> String {
+    let positions : HashMap<char, Point<i32>> = [
+        ('0', Point::new(1, 0)),
+        ('A', Point::new(2, 0)),
+        ('1', Point::new(0, 1)),
+        ('2', Point::new(1, 1)),
+        ('3', Point::new(2, 1)),
+        ('4', Point::new(0, 2)),
+        ('5', Point::new(1, 2)),
+        ('6', Point::new(2, 2)),
+        ('7', Point::new(0, 3)),
+        ('8', Point::new(1, 3)),
+        ('9', Point::new(2, 3)),
+    ].iter().cloned().collect();
 
-            let sequence = self.get_sequences_from(start, end);
+    if positions[&start].y == 0 && positions[&end].y > 0 && positions[&end].x == 0 {
+        let x_diff = positions[&end].x - positions[&start].x;
+        let y_diff = positions[&end].y - positions[&start].y;
 
-            answer += &sequence;
+        return "^".repeat(y_diff.abs() as usize) + "<".repeat(x_diff.abs() as usize).as_str() + "A";
+    }
+
+    if positions[&start].x == 0 && positions[&end].x > 0 && positions[&end].y == 0 {
+        let x_diff = positions[&end].x - positions[&start].x;
+        let y_diff = positions[&end].y - positions[&start].y;
+
+        return ">".repeat(x_diff.abs() as usize) + "v".repeat(y_diff.abs() as usize).as_str() + "A";
+    }
+
+    let route = (vec![start], String::new());
+    let mut queue = vec![route];
+
+    while queue.len() > 0 {
+        let (path, instruction) = queue.remove(0);
+
+        let last = path.last().unwrap();
+
+        if *last == end {
+            return instruction + "A";
         }
 
-        answer
-    }
-
-    fn get_sequences_from(&self, start : char, target : char) -> String {
-        let mut queue = vec![(self.grid[&start], "".to_string())];
-        let mut visited : HashSet<Point<i32>> = HashSet::new();
-
-        let mut successes = vec![];
-
-        while queue.len() > 0 {
-            let (pos, seq) = queue.remove(0);
-
-            if pos == self.grid[&target] {
-                successes.push(seq + &'A'.to_string());
+        for (dir, symbol) in vec![
+            (Point::new(-1, 0), '<'),
+            (Point::new(0, -1), 'v'),
+            (Point::new(1, 0), '>'),
+            (Point::new(0, 1), '^'),
+        ] {
+            if !positions.iter().any(|(_, p)| *p == *positions.get(last).unwrap() + dir) {
                 continue;
             }
-            
-            for diff in vec![
-                (Point::new(-1, 0), '<'),
-                (Point::new(0, -1), 'v'),
-                (Point::new(1, 0), '>'),
-                (Point::new(0, 1), '^'),
-            ]{
-                let new_pos = pos + diff.0;
 
-                if visited.contains(&new_pos) {
-                    continue;
-                }
-                if self.grid.iter().find(|(_, &v)| v == new_pos).is_none() {
-                    continue;
-                }
-                if self.grid[&' '] == new_pos {
-                    continue;
-                }
-
-                visited.insert(new_pos);
-                let new_seq = seq.clone() + &diff.1.to_string();
-                
-
-                queue.push((new_pos, new_seq));
-            }
+            let mut new_position = path.clone();
+            new_position.push(*positions.iter().find(|(_, p)| **p == *positions.get(last).unwrap() + dir).unwrap().0);
+            let new_instruction = instruction.clone() + &symbol.to_string();
+            queue.push((new_position, new_instruction));
         }
-
-        if successes[0] == "<v<A" {
-            return "v<<A".to_string();
-        }
-
-        if successes[0] == "v>vA" {
-            return ">vvA".to_string();
-        }
-
-        successes[0].clone()
     }
+
+    "".to_string()
 }
 
-// fn get_least_expensive_numpad_sequence(seq : &str, numpad : &Keypad, controlpad : &Keypad) -> String {
+fn route_numeric(string : &str) -> String {
+
+    let chars : Vec<char> = string.chars().collect();
+    let mut solution = String::new();
+
+    for i in 0..chars.len() {
+        solution += best_route_numeric_keypad(if i == 0 { 'A' } else { chars[i - 1] }, chars[i]).as_str()
+    }
+
+    solution
+}
+
+fn repeat_directional_len(mut string : &str, amt : usize, cache : Option<&HashMap<String, u128>>) -> u128 {
+    let mut solution = string.to_string();
+
+    if amt < CACHE_SIZE || cache.is_none() {
+        for i in 0..amt {
+            println!("{}", i+1);
+            solution = route_directional(solution.as_str())
+        }
+
+        return solution.to_string().len() as u128;
+    }
+
+    for i in 0..amt-CACHE_SIZE  {
+        println!("{}", i+1);
+        solution = route_directional(solution.as_str())
+    }
+
+    let mut parts : Vec<&str> = solution.split('A').collect();
+    if *parts.last().unwrap() == "" {
+        parts.pop(); // Remove last empty part
+    }
+
+    let length = parts.iter()
+        .map(|part| cache.unwrap()[&(part.to_string() + "A")])
+        .sum::<u128>();
+
+    println!("LENGTH: {}", length);
+    length
     
+}
 
-//     seq.chars().enumerate().map(|(i, _)| {
-//         let start = if i == 0 { 'A' } else { seq.chars().nth(i - 1).unwrap() };
-//         let end = seq.chars().nth(i).unwrap();
+const CACHE_SIZE : usize = 13;
 
-//         let least_expensive = numpad.get_sequences_from(start, end).iter().map(|seq| {
-//             get_least_expensive_controlpad_sequence(seq, 2, controlpad)
-//         }).min_by_key(|seq| seq.len()).unwrap();
-
-//         println!("{} -> {}: {}", start, end, least_expensive);
-//         least_expensive 
-//     }).fold("".to_string(), |acc, next| acc + next.as_str())
-// }
-
-// fn get_least_expensive_controlpad_sequence(seq : &str, depth : i32, controlpad : &Keypad) -> String {
-//     if depth == 0 {
-//         return seq.to_string();
-//     }
-
-//     seq.chars().enumerate().map(|(i, _)| {
-//         let start = if i == 0 { 'A' } else { seq.chars().nth(i - 1).unwrap() };
-//         let end = seq.chars().nth(i).unwrap();
-
-//         let least_expensive = controlpad.get_sequences_from(start, end).iter().map(|seq| {
-//             get_least_expensive_controlpad_sequence(seq, depth - 1, controlpad)
-//         }).min_by_key(|seq| seq.len()).unwrap();
-
-//         println!("{} -> {}: {}", start, end, least_expensive);
-//         least_expensive 
-//     }).fold("".to_string(), |acc, next| acc + next.as_str())
-// }
-
-fn main() {
+fn main() { 
     let file = include_str!("input.txt");
 
     let inputs = file.lines().collect::<Vec<&str>>();
 
-    let numpad = Keypad::new_numpad();
-    let control_pad = Keypad::new_control_pad();    
+    let mut cache : HashMap<String, u128> = HashMap::new();
 
-    // let p1 = numpad.get_sequence("029A");
-    // println!("{} vs \n<A^A>^^AvvvA", p1);
-    // let p2 = control_pad.get_sequence(&p1);
-    // println!("{} vs \nv<<A>>^A<A>AvA<^AA>A<vAAA>^A", p2);
-    // let p3 = control_pad.get_sequence(&p2);
-    // println!("{} vs \n<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A", p3);
+    for start in vec!['<', '>', '^', 'v', 'A'] {
+        for end in vec!['<', '>', '^', 'v', 'A'] {
+            let route = best_route_directional_keypad(start, end);
+            cache.insert(route.clone(), repeat_directional_len(route.as_str(), CACHE_SIZE, None));
+        }
+    }
 
-    // let seq = get_least_expensive_numpad_sequence("029A", &numpad, &control_pad);
-    // println!("{}", seq);
-
-    let part1 : usize = inputs.iter().map(|line| {
-        let numeric_part : usize = line[0..3].parse().unwrap();
-
-        let input1 = numpad.get_sequence(&line);
-        let input2 = control_pad.get_sequence(&input1);
-        let input3 = control_pad.get_sequence(&input2);
-
-        println!("{} {} {}", input3.len(), input3, numeric_part);
-        println!("{}", numpad.decode(&control_pad.decode(&control_pad.decode(&input3))));
-
-        input3.len() * numeric_part
+    let complexities : u128 = inputs.iter().map(|input| {
+        let length = repeat_directional_len(route_numeric(input).as_str(), 2, Some(&cache));
+        input[0..3].parse::<u128>().unwrap() * length
     }).sum();
 
+    println!("PART 1: {}", complexities);
 
-    println!("Part 1: {}", part1);
+    let complexities : u128 = inputs.iter().map(|input| {
+        let length = repeat_directional_len(route_numeric(input).as_str(), 25, Some(&cache));
+        let ans = input[0..3].parse::<u128>().unwrap() * length;
+        println!("{} : {}", input, ans);
+        ans
+    }).sum();
 
-    // <<vAA>A>^AAvA<^A>AvA^A<<vA>>^AAvA^A<vA>^AA<A>A<<vA>A>^AAAvA<^A>A
-    // <v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
+    println!("PART 2: {}", complexities);
 
-    // <v<A>>^AvA^A<vA<AA>>^AAvA<^A>AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A
-    // <<vA>>^AvA^A<<vA>>^AA<<vA>A>^AAvAA<^A>A<vA>^AA<A>A<<vA>A>^AAAvA<^A>A
+    // is        259245930604564
+    // should be 226179529377982
 
-    //println!("{}", numpad.decode(&control_pad.decode(&control_pad.decode("<v<A>>^A<vA<A>>^AAvAA<^A>A<v<A>>^AAvA^A<vA>^AA<A>A<v<A>A>^AAAvA<^A>A"))));
+    /*
+    671A : 60893633732822
+    826A : 77504793828476
+    670A : 56446219860480
+    085A : 6862235364940
+    283A : 24472646591264 
+     */
 }
